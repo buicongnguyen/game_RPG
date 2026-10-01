@@ -1,0 +1,20 @@
+{
+  "name": "game-rpg-lantern-trail",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "description": "The Lantern Trail: a small 2.5D storybook RPG on floating islets, drawn with the plain 2D canvas so it runs smoothly on phones.",
+  "scripts": {
+    "dev": "node server.mjs",
+    "test": "node --test tests/trail.test.mjs",
+    "test:browser": "node tests/trail-browser.mjs",
+    "bake": "node tools/bake/run.mjs",
+    "build": "node scripts/build.mjs",
+    "deploy": "node scripts/deploy.mjs"
+  },
+  "devDependencies": {
+    "esbuild": "0.28.2",
+    "playwright": "1.61.1",
+    "three": "0.180.0"
+  }
+}
