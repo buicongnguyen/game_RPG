@@ -39,3 +39,7 @@ let bytes = 0, files = 0;
 async function measure(dir) { for (const e of await readdir(dir, {withFileTypes: true})) { const f = path.join(dir, e.name); if (e.isDirectory()) await measure(f); else { files++; bytes += (await stat(f)).size; } } }
 await measure(out);
 console.log(`Built ${files} files (${(bytes / 1048576).toFixed(2)} MiB) in dist/.`);
+
+// Home-screen metadata accompanies the existing bundled game.
+const { copyFile: mobileHomeScreenCopy } = await import('node:fs/promises');
+await mobileHomeScreenCopy(new URL('../manifest.webmanifest', import.meta.url), new URL('../dist/manifest.webmanifest', import.meta.url));

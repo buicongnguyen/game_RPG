@@ -1,3 +1,4 @@
+import './mobile-game-init.mjs';
 // The Lantern Trail: a little 2.5D RPG chapter of The Lantern Picnic.
 // Walk Fernhollow's floating islets, find the friends the mist scattered, calm lonely Mistlings in
 // gentle turn-based battles, light the waystones and wake Hazel's beacon.
@@ -318,7 +319,16 @@ function bindInput() {
     if (/^(Arrow|Key[WASD])/.test(k)) { keys.add(k); if (mode === 'explore') { path = null; e.preventDefault(); } }
   });
   addEventListener('keyup', e => keys.delete(e.code));
-  addEventListener('blur', () => keys.clear());
+  const suspendTrailInput = () => {
+    keys.clear(); stick.id = null; stick.tap = null; stick.x = stick.y = 0; path = null; showStick();
+    if (mode === 'explore') openMenu();
+  };
+  addEventListener('blur', suspendTrailInput);
+  addEventListener('pagehide', suspendTrailInput);
+  addEventListener('mobile-game-interruption', suspendTrailInput);
+  document.addEventListener('visibilitychange', () => { if (document.hidden) suspendTrailInput(); });
+
+
   const canvas = $('trail');
   document.addEventListener('pointerdown', () => { if (ringState && ringState.press === null) { unlockAudio(); onConfirm(); } }, true);
   canvas.addEventListener('pointerdown', e => {
@@ -334,9 +344,10 @@ function bindInput() {
       showStick();
       return;
     }
-    stick.tap = {id: e.pointerId, x: e.clientX, y: e.clientY, t: performance.now()};
+    stick.tap = {id: e.pointerId, x: e.clientX, y: e.clientY, t: performance.now(), moved: false};
   });
   canvas.addEventListener('pointermove', e => {
+    if (stick.tap?.id === e.pointerId && Math.hypot(e.clientX - stick.tap.x, e.clientY - stick.tap.y) > 14) stick.tap.moved = true;
     if (e.pointerId === stick.id) {
       const dx = e.clientX - stick.ox, dy = e.clientY - stick.oy, r = 54, d = Math.hypot(dx, dy);
       const k = d > r ? r / d : 1;
@@ -354,12 +365,13 @@ function bindInput() {
       return;
     }
     if (stick.tap?.id === e.pointerId && e.type === 'pointerup') {
-      if (Math.hypot(e.clientX - stick.tap.x, e.clientY - stick.tap.y) < 14) tapAt(e.clientX, e.clientY);
+      if (!stick.tap.moved && Math.hypot(e.clientX - stick.tap.x, e.clientY - stick.tap.y) < 14) tapAt(e.clientX, e.clientY);
       stick.tap = null;
     }
   };
   canvas.addEventListener('pointerup', end);
-  canvas.addEventListener('pointercancel', end);
+  canvas.addEventListener('pointercancel', e => { if (stick.tap?.id === e.pointerId) stick.tap = null; end(e); });
+  canvas.addEventListener('lostpointercapture', e => { if (stick.tap?.id === e.pointerId) stick.tap = null; end(e); });
   canvas.addEventListener('contextmenu', e => e.preventDefault());
 
   $('begin').addEventListener('click', () => {
